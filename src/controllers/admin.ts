@@ -1,15 +1,22 @@
 import { Request, Response } from "express";
 import { Product } from "../models/product";
 import { IProduct } from "../util/schemas";
+import { User } from "../models/user";
+import { userId } from "../app";
 
-export function getProducts(req: Request, res: Response, next: Function) {
-  Product.fetchAll((products) => {
+export async function getProducts(req: Request, res: Response, next: Function) {
+  try {
+    const user = await User.findByPk(userId);
+    const products = await user?.getProducts();
+    console.log("products: ", products);
     res.render("admin/products", {
       prods: products,
       pageTitle: "Admin Products",
       path: "/admin/products",
     });
-  });
+  } catch (err: any) {
+    console.log(err.message);
+  }
 }
 
 export function getAddProduct(req: Request, res: Response, next: Function) {
@@ -20,22 +27,47 @@ export function getAddProduct(req: Request, res: Response, next: Function) {
   });
 }
 
-export function postAddProduct(req: Request, res: Response, next: Function) {
+export async function postAddProduct(
+  req: Request,
+  res: Response,
+  next: Function
+) {
   const { title, imageUrl, description, price } = req.body;
 
-  const product = new Product(title, imageUrl, description, price);
-  product.save();
-  res.redirect("/");
+  try {
+    // const user = await User.findByPk("4c844722-2dbd-4232-93c3-d07c4a34eb0a");
+    // console.log("user", user);
+
+    // if (user) {
+    await Product.create({
+      title,
+      imageUrl,
+      description,
+      price,
+      UserId: userId,
+    } as Product);
+    console.log("created a product");
+    res.redirect("/");
+    // }
+  } catch (err: any) {
+    console.log(err);
+  }
 }
 
-export function getEditProduct(req: Request, res: Response, next: Function) {
+export async function getEditProduct(
+  req: Request,
+  res: Response,
+  next: Function
+) {
   const editMode = req.query.edit;
   if (!editMode) {
     return res.redirect("/");
   }
 
   const prodId = req.params.productId;
-  Product.findById(prodId, (product: IProduct) => {
+
+  try {
+    const product = await Product.findByPk(prodId);
     if (!product) {
       return res.redirect("/");
     }
@@ -46,29 +78,53 @@ export function getEditProduct(req: Request, res: Response, next: Function) {
       editing: editMode,
       product,
     });
-  });
+  } catch (err: any) {
+    console.log(err.message);
+  }
 }
 
-export function postEditProduct(req: Request, res: Response, next: Function) {
+export async function postEditProduct(
+  req: Request,
+  res: Response,
+  next: Function
+) {
   const prodId = req.body.productId;
   const { title, imageUrl, description, price } = req.body;
-  const updatedProduct = new Product(
-    title,
-    imageUrl,
-    description,
-    price,
-    prodId
-  );
 
-  updatedProduct.save();
-  res.redirect("/admin/products");
+  try {
+    const product = await Product.findByPk(prodId);
+    if (product) {
+      product.title = title;
+      product.imageUrl = imageUrl;
+      product.description = description;
+      product.price = price;
+
+      await product.save();
+      res.redirect("/admin/products");
+    } else {
+      res.redirect("/");
+    }
+  } catch (err: any) {
+    console.log(err.message);
+  }
 }
 
-export function postDeleteProduct(req: Request, res: Response, next: Function) {
+export async function postDeleteProduct(
+  req: Request,
+  res: Response,
+  next: Function
+) {
   const prodId = req.params.productId;
 
   console.log(prodId);
 
-  Product.deleteById(prodId);
-  res.redirect("/admin/products");
+  try {
+    const product = await Product.findByPk(prodId);
+    if (product) {
+      await product.destroy();
+      res.redirect("/admin/products");
+    }
+  } catch (err: any) {
+    console.log(err.message);
+  }
 }

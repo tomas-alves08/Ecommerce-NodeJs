@@ -13,6 +13,13 @@ export interface IOrder {
 }
 
 export interface ICart {
-  orders: IOrder[];
-  totalPrice: number;
+  id: string;
+  UserId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IUser {
+  name: string;
+  email: string;
 }
