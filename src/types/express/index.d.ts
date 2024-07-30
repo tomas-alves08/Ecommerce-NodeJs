@@ -1,9 +1,9 @@
-import { User } from "../../models/user";
+import { IUser } from "../../util/schemas";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: User | null; // Define user property as optional
+      user?: IUser | null; // Define user property as optional
     }
   }
 }

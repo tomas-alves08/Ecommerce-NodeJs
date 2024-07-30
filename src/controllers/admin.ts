@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import { Product } from "../models/product";
-import { IProduct } from "../util/schemas";
-import { User } from "../models/user";
-import { userId } from "../app";
+// import { IProduct } from "../util/schemas";
+// import { User } from "../models/user";
+// import { userId } from "../app";
 
 export async function getProducts(req: Request, res: Response, next: Function) {
   try {
-    const user = await User.findByPk(userId);
-    const products = await user?.getProducts();
+    // const user = await User.findByPk(userId);
+    const products = await Product.fetchAll();
     console.log("products: ", products);
     res.render("admin/products", {
       prods: products,
@@ -39,13 +39,8 @@ export async function postAddProduct(
     // console.log("user", user);
 
     // if (user) {
-    await Product.create({
-      title,
-      imageUrl,
-      description,
-      price,
-      UserId: userId,
-    } as Product);
+    const product = await new Product(title, price, description, imageUrl);
+    product.save();
     console.log("created a product");
     res.redirect("/");
     // }
@@ -67,7 +62,7 @@ export async function getEditProduct(
   const prodId = req.params.productId;
 
   try {
-    const product = await Product.findByPk(prodId);
+    const product = await Product.findById(prodId);
     if (!product) {
       return res.redirect("/");
     }
@@ -92,18 +87,22 @@ export async function postEditProduct(
   const { title, imageUrl, description, price } = req.body;
 
   try {
-    const product = await Product.findByPk(prodId);
-    if (product) {
-      product.title = title;
-      product.imageUrl = imageUrl;
-      product.description = description;
-      product.price = price;
+    // const product = await Product.findById(prodId);
+    // if (product) {
+    const product = {
+      title,
+      imageUrl,
+      description,
+      price,
+    };
+    // product.title = title;
+    // product.imageUrl = imageUrl;
+    // product.description = description;
+    // product.price = price;
 
-      await product.save();
-      res.redirect("/admin/products");
-    } else {
-      res.redirect("/");
-    }
+    const prod = await Product.update(prodId, product);
+    if (prod) res.redirect("/admin/products");
+    else res.redirect("/");
   } catch (err: any) {
     console.log(err.message);
   }
@@ -119,11 +118,11 @@ export async function postDeleteProduct(
   console.log(prodId);
 
   try {
-    const product = await Product.findByPk(prodId);
-    if (product) {
-      await product.destroy();
-      res.redirect("/admin/products");
-    }
+    // const product = await Product.findById(prodId);
+    // if (product) {
+    await Product.deleteById(prodId);
+    res.redirect("/admin/products");
+    // }
   } catch (err: any) {
     console.log(err.message);
   }
