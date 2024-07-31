@@ -1,3 +1,4 @@
+"use strict";
 // import {
 //   Table,
 //   Column,
@@ -6,16 +7,18 @@
 //   Default,
 //   PrimaryKey,
 //   ForeignKey,
+//   BelongsTo,
+//   BelongsToMany,
 // } from "sequelize-typescript";
 // import { v4 as uuidv4 } from "uuid";
-// import { Cart } from "./cart";
+// import { User } from "./user";
 // import { Product } from "./product";
-// import { Order } from "./order";
-
+// import { CartItem } from "./cart-item";
+// import { OrderItem } from "./order-item";
 // @Table({
-//   tableName: "OrderItems",
+//   tableName: "Orders",
 // })
-// export class OrderItem extends Model<OrderItem> {
+// export class Order extends Model<Order> {
 //   @PrimaryKey
 //   @Default(uuidv4)
 //   @Column({
@@ -24,24 +27,14 @@
 //     allowNull: false,
 //   })
 //   id!: string;
-
-//   @Column({
-//     type: DataType.INTEGER,
-//     allowNull: false,
-//   })
-//   quantity!: number;
-
-//   @ForeignKey(() => Order)
+//   @ForeignKey(() => User)
 //   @Column({
 //     type: DataType.UUID,
 //     allowNull: false,
 //   })
-//   OrderId!: string;
-
-//   @ForeignKey(() => Product)
-//   @Column({
-//     type: DataType.STRING,
-//     allowNull: false,
-//   })
-//   ProductId!: string;
+//   UserId!: string;
+//   @BelongsTo(() => User)
+//   user!: User;
+//   @BelongsToMany(() => Product, () => OrderItem)
+//   products!: Product[];
 // }

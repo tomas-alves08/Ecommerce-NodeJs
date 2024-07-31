@@ -75,24 +75,27 @@ import { getDb } from "../util/database";
 import { IProduct } from "../util/schemas";
 
 export class Product {
-  _id = null;
-  title = "";
-  price = 0;
-  description = "";
-  imageUrl = "";
+  title: string;
+  price: number;
+  description: string;
+  imageUrl: string;
+  _id?: ObjectId;
+  userId?: ObjectId;
 
   constructor(
     title: string,
     price: number,
     description: string,
     imageUrl: string,
-    id?: ObjectId | null
+    userId?: ObjectId,
+    id?: ObjectId
   ) {
-    this._id = id ? new ObjectId(id) : null;
+    this._id = id ? new ObjectId(id) : undefined;
     this.title = title;
     this.price = price;
     this.description = description;
     this.imageUrl = imageUrl;
+    this.userId = userId ? userId : undefined;
   }
 
   async save() {

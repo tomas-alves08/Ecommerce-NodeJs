@@ -1,3 +1,4 @@
+"use strict";
 // import {
 //   Table,
 //   Column,
@@ -13,12 +14,10 @@
 // import { User } from "./user";
 // import { Product } from "./product";
 // import { CartItem } from "./cart-item";
-// import { OrderItem } from "./order-item";
-
 // @Table({
-//   tableName: "Orders",
+//   tableName: "Carts",
 // })
-// export class Order extends Model<Order> {
+// export class Cart extends Model<Cart> {
 //   @PrimaryKey
 //   @Default(uuidv4)
 //   @Column({
@@ -27,17 +26,20 @@
 //     allowNull: false,
 //   })
 //   id!: string;
-
 //   @ForeignKey(() => User)
 //   @Column({
 //     type: DataType.UUID,
 //     allowNull: false,
 //   })
 //   UserId!: string;
-
 //   @BelongsTo(() => User)
 //   user!: User;
-
-//   @BelongsToMany(() => Product, () => OrderItem)
+//   @BelongsToMany(() => Product, () => CartItem)
 //   products!: Product[];
+//   // Define the method signature for getProducts
+//   //   public getProducts!: () => Promise<Product[]>;
+//   //   public async getProduct(id: string): Promise<Product | null> {
+//   //     console.log("ID: ", id);
+//   //     return Product.findOne({ where: { id, UserId: this.id } });
+//   //   }
 // }

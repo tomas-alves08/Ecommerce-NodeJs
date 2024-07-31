@@ -1,15 +1,15 @@
 import { Router } from "express";
 
 import {
-  // postCart,
-  // getCart,
+  postCart,
+  getCart,
   // getCheckout,
   getIndex,
-  // getOrders,
-  // postOrder,
+  getOrders,
+  postOrder,
   getProduct,
   getProducts,
-  // postCartDeleteProduct,
+  postCartDeleteProduct,
 } from "../controllers/shop";
 const router = Router();
 
@@ -19,15 +19,15 @@ router.get("/products", getProducts);
 
 router.get("/products/:productId", getProduct);
 
-// router.get("/cart", getCart);
+router.get("/cart", getCart);
 
-// router.post("/cart", postCart);
+router.post("/cart", postCart);
 
-// router.post("/cart-delete-item", postCartDeleteProduct);
+router.post("/cart-delete-item", postCartDeleteProduct);
 
-// router.get("/orders", getOrders);
+router.get("/orders", getOrders);
 
-// router.post("/create-order", postOrder);
+router.post("/create-order", postOrder);
 
 // router.get("/checkout", getCheckout);
 

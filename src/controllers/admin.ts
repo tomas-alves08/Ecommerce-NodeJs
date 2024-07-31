@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Product } from "../models/product";
+import { RequestCustom } from "../util/schemas";
 // import { IProduct } from "../util/schemas";
 // import { User } from "../models/user";
 // import { userId } from "../app";
@@ -28,7 +29,7 @@ export function getAddProduct(req: Request, res: Response, next: Function) {
 }
 
 export async function postAddProduct(
-  req: Request,
+  req: RequestCustom,
   res: Response,
   next: Function
 ) {
@@ -39,7 +40,13 @@ export async function postAddProduct(
     // console.log("user", user);
 
     // if (user) {
-    const product = await new Product(title, price, description, imageUrl);
+    const product = await new Product(
+      title,
+      price,
+      description,
+      imageUrl,
+      req?.user?._id
+    );
     product.save();
     console.log("created a product");
     res.redirect("/");

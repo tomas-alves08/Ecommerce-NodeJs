@@ -1,3 +1,4 @@
+"use strict";
 // import {
 //   Table,
 //   Column,
@@ -10,12 +11,10 @@
 // import { v4 as uuidv4 } from "uuid";
 // import { Cart } from "./cart";
 // import { Product } from "./product";
-// import { Order } from "./order";
-
 // @Table({
-//   tableName: "OrderItems",
+//   tableName: "CartItems",
 // })
-// export class OrderItem extends Model<OrderItem> {
+// export class CartItem extends Model<CartItem> {
 //   @PrimaryKey
 //   @Default(uuidv4)
 //   @Column({
@@ -24,20 +23,17 @@
 //     allowNull: false,
 //   })
 //   id!: string;
-
 //   @Column({
 //     type: DataType.INTEGER,
 //     allowNull: false,
 //   })
 //   quantity!: number;
-
-//   @ForeignKey(() => Order)
+//   @ForeignKey(() => Cart)
 //   @Column({
 //     type: DataType.UUID,
 //     allowNull: false,
 //   })
-//   OrderId!: string;
-
+//   CartId!: string;
 //   @ForeignKey(() => Product)
 //   @Column({
 //     type: DataType.STRING,

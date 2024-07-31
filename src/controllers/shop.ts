@@ -1,5 +1,13 @@
 import { Request, Response } from "express";
 import { Product } from "../models/product";
+import {
+  ICart,
+  IProduct,
+  IProductWithQty,
+  RequestCustom,
+} from "../util/schemas";
+import { getDb } from "../util/database";
+import { ObjectId } from "mongodb";
 // // import { Cart } from "../models/cart";
 // import { ICart, IProduct } from "../util/schemas";
 
@@ -57,243 +65,86 @@ export async function getIndex(req: Request, res: Response, next: Function) {
   }
 }
 
-// export async function getCart(req: Request, res: Response, next: Function) {
-//   try {
-//     const user = await User.findByPk(userId, {
-//       include: [
-//         {
-//           model: Cart,
-//           include: [
-//             {
-//               model: Product,
-//               through: { attributes: ["quantity"] },
-//             },
-//           ],
-//         },
-//       ],
-//     });
+export async function getCart(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
+  try {
+    const cartProducts = await req.user?.getCart();
 
-//     const cart = user?.cart;
-//     console.log("CART: ", cart);
+    res.render("shop/cart", {
+      path: "/cart",
+      pageTitle: "Your Cart",
+      products: cartProducts,
+    });
+  } catch (err: any) {
+    console.log(err.message);
+  }
+}
 
-//     const cartProducts = cart?.products.map((product: any) => {
-//       console.log("PRODUCT: ", product);
-//       return {
-//         ...product.get({ plain: true }),
-//         quantity: product.CartItem.quantity,
-//       };
-//     });
+export async function postCart(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
+  try {
+    const productId = req.body.productId || "";
+    const product = await Product.findById(productId);
+    if (product) {
+      const user = await req.user?.addToCart(product as Product);
+      console.log("User: ", user);
+      res.redirect("/cart");
+    }
+  } catch (err: any) {
+    console.log(err.message);
+  }
+}
 
-//     console.log("Cart Products: ", cartProducts);
+export async function postCartDeleteProduct(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
+  try {
+    await req.user?.deleteItemFromCart(req.body.productId);
+    res.redirect("/cart");
+  } catch (err: any) {
+    console.log(err.message);
+  }
+}
 
-//     res.render("shop/cart", {
-//       path: "/cart",
-//       pageTitle: "Your Cart",
-//       products: cartProducts,
-//     });
-//   } catch (err: any) {
-//     console.log(err.message);
-//   }
-// }
+export async function getOrders(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
+  try {
+    const orders = await req.user?.getOrders();
 
-// export async function postCart(req: Request, res: Response, next: Function) {
-//   try {
-//     const productId = req.body.productId || "";
-//     const user = await User.findByPk(userId);
-//     const fetchedCart: Cart | null = (await user?.getCart()) || null;
-//     const product = await Product.findByPk(productId);
-//     const cartItem = await CartItem.findOne({
-//       where: {
-//         CartId: fetchedCart?.id,
-//         ProductId: productId,
-//       },
-//     });
+    res.render("shop/orders", {
+      path: "/orders",
+      pageTitle: "Your Orders",
+      orders,
+    });
+  } catch (err: any) {
+    console.log(err.message);
+  }
+}
 
-//     if (!fetchedCart || !product) {
-//       return res.redirect("/cart");
-//     }
+export async function postOrder(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
+  try {
+    await req.user?.addOrder();
 
-//     console.log("Cart Item: ", cartItem);
-//     if (!cartItem) {
-//       await CartItem.create({
-//         CartId: fetchedCart?.id,
-//         ProductId: product?.id,
-//         quantity: 1,
-//       } as any);
-//     } else {
-//       cartItem.quantity += 1;
-//       await cartItem.save();
-//     }
-
-//     res.redirect("/cart");
-//   } catch (err: any) {
-//     console.log(err.message);
-//   }
-// }
-
-// export async function postCartDeleteProduct(
-//   req: Request,
-//   res: Response,
-//   next: Function
-// ) {
-//   const prodId = req.body.productId;
-//   try {
-//     const user = await User.findByPk(userId, {
-//       include: [
-//         {
-//           model: Cart,
-//           include: [
-//             {
-//               model: Product,
-//               through: { attributes: ["quantity"] },
-//             },
-//           ],
-//         },
-//       ],
-//     });
-
-//     const cart = user?.cart;
-//     const product = cart?.products.find((prod) => prod.id === prodId);
-//     if (product) {
-//       const cartItem = await CartItem.findOne({
-//         where: {
-//           CartId: cart?.id,
-//           ProductId: product?.id,
-//         },
-//       });
-
-//       if (cartItem) await cartItem.destroy();
-//     }
-
-//     res.redirect("/cart");
-//   } catch (err: any) {
-//     console.log(err.message);
-//   }
-// }
-
-// export async function getOrders(req: Request, res: Response, next: Function) {
-//   try {
-//     const user = await User.findByPk(userId, {
-//       include: [
-//         {
-//           model: Order,
-//           include: [
-//             {
-//               model: Product,
-//               through: { attributes: ["quantity"] },
-//             },
-//           ],
-//         },
-//       ],
-//     });
-
-//     if (!user) {
-//       return res.status(404).send("User not found");
-//     }
-
-//     const ordersWithoutDetails = await Order.findAll({
-//       where: { UserId: user.id },
-//       include: [
-//         {
-//           model: Product,
-//           through: {
-//             attributes: ["quantity"],
-//           },
-//         },
-//       ],
-//     });
-
-//     const orders = ordersWithoutDetails.map((order) => {
-//       return {
-//         id: order.id,
-//         createdAt: order.createdAt,
-//         updatedAt: order.updatedAt,
-//         products: order.products.map((product) => {
-//           return {
-//             ...product.get({ plain: true }),
-//             quantity: (product as any).OrderItem.quantity,
-//           };
-//         }),
-//       };
-//     });
-
-//     // console.log("PRODUCTS WITH QTY + ORDER ID: ", products);
-
-//     res.render("shop/orders", {
-//       path: "/orders",
-//       pageTitle: "Your Orders",
-//       orders,
-//     });
-//   } catch (err: any) {
-//     console.log(err.message);
-//   }
-// }
-
-// export async function postOrder(req: Request, res: Response, next: Function) {
-//   try {
-//     const user = await User.findByPk(userId, {
-//       include: [
-//         {
-//           model: Cart,
-//           include: [
-//             {
-//               model: Product,
-//               through: { attributes: ["quantity"] },
-//             },
-//           ],
-//         },
-//       ],
-//     });
-
-//     const cart = await user?.cart;
-//     // console.log("CART: ", cart);
-//     const products = cart?.products;
-
-//     // const newOrder = await user?.createOrder();
-//     const order = await Order.create({
-//       UserId: userId,
-//     } as any);
-
-//     const cartItems = await Promise.all(
-//       products?.map(async (product) => {
-//         return CartItem.findOne({
-//           where: {
-//             ProductId: product.id,
-//           },
-//         } as any);
-//       }) as any
-//     );
-
-//     const orderItems = await Promise.all(
-//       products?.map(async (product) => {
-//         const cartItem = cartItems.find(
-//           (item) => item.ProductId === product.id
-//         );
-
-//         return OrderItem.create({
-//           ProductId: product.id,
-//           OrderId: order?.id,
-//           quantity: cartItem.quantity,
-//         } as any);
-//       }) as any
-//     );
-//     console.log("ORDERS: ", orderItems);
-
-//     // DELETE CART ITEMS
-//     if (orderItems) {
-//       await Promise.all(
-//         cartItems?.map(async (item) => {
-//           const cartItem = await CartItem.findByPk(item.id);
-//           await cartItem?.destroy();
-//         })
-//       );
-//     }
-
-//     res.redirect("/orders");
-//   } catch (err: any) {
-//     console.log(err.message);
-//   }
-// }
+    res.redirect("/orders");
+  } catch (err: any) {
+    console.log(err.message);
+  }
+}
 
 // // export function getCheckout(req: Request, res: Response, next: Function) {
 // //   res.render("shop/checkout", {

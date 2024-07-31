@@ -1,3 +1,4 @@
+"use strict";
 // import {
 //   Table,
 //   Column,
@@ -11,7 +12,6 @@
 // import { Cart } from "./cart";
 // import { Product } from "./product";
 // import { Order } from "./order";
-
 // @Table({
 //   tableName: "OrderItems",
 // })
@@ -24,20 +24,17 @@
 //     allowNull: false,
 //   })
 //   id!: string;
-
 //   @Column({
 //     type: DataType.INTEGER,
 //     allowNull: false,
 //   })
 //   quantity!: number;
-
 //   @ForeignKey(() => Order)
 //   @Column({
 //     type: DataType.UUID,
 //     allowNull: false,
 //   })
 //   OrderId!: string;
-
 //   @ForeignKey(() => Product)
 //   @Column({
 //     type: DataType.STRING,
