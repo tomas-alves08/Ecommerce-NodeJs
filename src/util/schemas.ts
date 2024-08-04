@@ -1,6 +1,9 @@
 import { Request } from "express";
 import { ObjectId } from "mongodb";
-import { User } from "../models/user";
+import User from "../models/user";
+import Product from "../models/product";
+import { Document } from "mongoose";
+import { Session } from "express-session";
 
 export interface IProduct {
   _id?: string;
@@ -15,13 +18,33 @@ export interface IProductWithQty extends IProduct {
 }
 
 export interface IOrder {
-  id: string;
-  qty: number;
-  price: number;
+  _id: ObjectId;
+  products: {
+    productData: IProduct;
+    quantity: number;
+  }[];
+  user: {
+    name: string;
+    userId: ObjectId;
+  };
 }
 
 export interface ICart {
-  items: { productId: ObjectId; quantity: number }[];
+  items: ICartItem[];
+}
+
+export interface ICartItem {
+  productId: ObjectId;
+  quantity: number;
+}
+
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  cart: ICart;
+  addToCart: (product: InstanceType<typeof Product>) => Promise<void>;
+  removeFromCart: (productId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
 }
 
 export interface IUser {
@@ -31,5 +54,10 @@ export interface IUser {
 }
 
 export interface RequestCustom extends Request {
-  user?: User | null;
+  user?: InstanceType<typeof User> | null;
+}
+
+export interface SessionCustom extends Session {
+  isLoggedIn: boolean;
+  user: InstanceType<typeof User> | null;
 }

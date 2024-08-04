@@ -1,30 +1,36 @@
-import { Request, Response } from "express";
-import { Product } from "../models/product";
-import { RequestCustom } from "../util/schemas";
-// import { IProduct } from "../util/schemas";
-// import { User } from "../models/user";
-// import { userId } from "../app";
+import { Response } from "express";
+import Product from "../models/product";
+import { RequestCustom, SessionCustom } from "../util/schemas";
 
-export async function getProducts(req: Request, res: Response, next: Function) {
+export async function getProducts(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
   try {
-    // const user = await User.findByPk(userId);
-    const products = await Product.fetchAll();
+    const products = await Product.find();
     console.log("products: ", products);
     res.render("admin/products", {
       prods: products,
       pageTitle: "Admin Products",
       path: "/admin/products",
+      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
   }
 }
 
-export function getAddProduct(req: Request, res: Response, next: Function) {
+export function getAddProduct(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
   res.render("admin/edit-product", {
     pageTitle: "Add Product",
     path: "/admin/add-product",
     editing: false,
+    isAuthenticated: (req.session as SessionCustom).isLoggedIn,
   });
 }
 
@@ -36,28 +42,23 @@ export async function postAddProduct(
   const { title, imageUrl, description, price } = req.body;
 
   try {
-    // const user = await User.findByPk("4c844722-2dbd-4232-93c3-d07c4a34eb0a");
-    // console.log("user", user);
-
-    // if (user) {
-    const product = await new Product(
+    const product = await new Product({
       title,
       price,
       description,
       imageUrl,
-      req?.user?._id
-    );
-    product.save();
+      userId: req.user,
+    });
+    await product.save();
     console.log("created a product");
     res.redirect("/");
-    // }
   } catch (err: any) {
     console.log(err);
   }
 }
 
 export async function getEditProduct(
-  req: Request,
+  req: RequestCustom,
   res: Response,
   next: Function
 ) {
@@ -79,6 +80,7 @@ export async function getEditProduct(
       path: "/admin/edit-product",
       editing: editMode,
       product,
+      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -86,7 +88,7 @@ export async function getEditProduct(
 }
 
 export async function postEditProduct(
-  req: Request,
+  req: RequestCustom,
   res: Response,
   next: Function
 ) {
@@ -94,29 +96,24 @@ export async function postEditProduct(
   const { title, imageUrl, description, price } = req.body;
 
   try {
-    // const product = await Product.findById(prodId);
-    // if (product) {
-    const product = {
-      title,
-      imageUrl,
-      description,
-      price,
-    };
-    // product.title = title;
-    // product.imageUrl = imageUrl;
-    // product.description = description;
-    // product.price = price;
+    const product = await Product.findById(prodId);
+    if (product) {
+      product.title = title;
+      product.description = description;
+      product.imageUrl = imageUrl;
+      product.price = price;
 
-    const prod = await Product.update(prodId, product);
-    if (prod) res.redirect("/admin/products");
-    else res.redirect("/");
+      await product.save();
+
+      res.redirect("/admin/products");
+    } else res.redirect("/");
   } catch (err: any) {
     console.log(err.message);
   }
 }
 
 export async function postDeleteProduct(
-  req: Request,
+  req: RequestCustom,
   res: Response,
   next: Function
 ) {
@@ -125,11 +122,8 @@ export async function postDeleteProduct(
   console.log(prodId);
 
   try {
-    // const product = await Product.findById(prodId);
-    // if (product) {
-    await Product.deleteById(prodId);
+    await Product.findByIdAndDelete(prodId);
     res.redirect("/admin/products");
-    // }
   } catch (err: any) {
     console.log(err.message);
   }

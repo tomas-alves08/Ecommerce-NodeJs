@@ -31,34 +31,34 @@
 
 // export default sequelize;
 
-import dotenv from "dotenv";
-import { MongoClient, Db } from "mongodb";
+// import dotenv from "dotenv";
+// import { MongoClient, Db } from "mongodb";
 
-dotenv.config();
+// dotenv.config();
 
-let _db: Db;
+// let _db: Db;
 
-const mongoConnect = (callback: () => void) => {
-  const uri = process.env.MONGODB_URI || "";
+// const mongoConnect = (callback: () => void) => {
+//   const uri = process.env.MONGODB_URI || "";
 
-  MongoClient.connect(uri)
-    .then((client) => {
-      console.log("Connected to MongoDB");
-      _db = client.db();
-      callback();
-    })
-    .catch((err) => {
-      console.log(err);
-      throw err;
-    });
-};
+//   MongoClient.connect(uri)
+//     .then((client) => {
+//       console.log("Connected to MongoDB");
+//       _db = client.db();
+//       callback();
+//     })
+//     .catch((err) => {
+//       console.log(err);
+//       throw err;
+//     });
+// };
 
-const getDb = () => {
-  if (_db) {
-    return _db;
-  }
-  throw new Error("No database found!");
-};
+// const getDb = () => {
+//   if (_db) {
+//     return _db;
+//   }
+//   throw new Error("No database found!");
+// };
 
-export default mongoConnect;
-export { getDb };
+// export default mongoConnect;
+// export { getDb };

@@ -1,43 +1,23 @@
-// import {
-//   Table,
-//   Column,
-//   Model,
-//   DataType,
-//   Default,
-//   PrimaryKey,
-//   ForeignKey,
-//   BelongsTo,
-//   BelongsToMany,
-// } from "sequelize-typescript";
-// import { v4 as uuidv4 } from "uuid";
-// import { User } from "./user";
-// import { Product } from "./product";
-// import { CartItem } from "./cart-item";
-// import { OrderItem } from "./order-item";
+import mongoose, { Schema } from "mongoose";
+const OrderSchema = mongoose.Schema;
+import { IProductWithQty, IProduct } from "../util/schemas";
+import Product from "./product";
 
-// @Table({
-//   tableName: "Orders",
-// })
-// export class Order extends Model<Order> {
-//   @PrimaryKey
-//   @Default(uuidv4)
-//   @Column({
-//     type: DataType.UUID,
-//     defaultValue: DataType.UUIDV4,
-//     allowNull: false,
-//   })
-//   id!: string;
+const orderSchema: Schema = new OrderSchema({
+  products: [
+    {
+      productData: { type: Object, required: true },
+      quantity: { type: Number, required: true },
+    },
+  ],
+  user: {
+    name: { type: String, required: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+});
 
-//   @ForeignKey(() => User)
-//   @Column({
-//     type: DataType.UUID,
-//     allowNull: false,
-//   })
-//   UserId!: string;
-
-//   @BelongsTo(() => User)
-//   user!: User;
-
-//   @BelongsToMany(() => Product, () => OrderItem)
-//   products!: Product[];
-// }
+export = mongoose.model("Order", orderSchema);

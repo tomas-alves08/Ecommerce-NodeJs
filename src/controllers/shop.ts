@@ -1,41 +1,32 @@
-import { Request, Response } from "express";
-import { Product } from "../models/product";
-import {
-  ICart,
-  IProduct,
-  IProductWithQty,
-  RequestCustom,
-} from "../util/schemas";
-import { getDb } from "../util/database";
-import { ObjectId } from "mongodb";
-// // import { Cart } from "../models/cart";
-// import { ICart, IProduct } from "../util/schemas";
+import { Response } from "express";
+import Product from "../models/product";
+import { RequestCustom, SessionCustom } from "../util/schemas";
+import Order from "../models/order";
 
-// // import { Product } from "../models/product";
-// import { User } from "../models/user";
-// // import { userId } from "../app";
-// import { Cart } from "../models/cart";
-// import { CartItem } from "../models/cart-item";
-// import { Order } from "../models/order";
-// import { OrderItem } from "../models/order-item";
-
-// // type ProductCartItem = Product & CartItem;
-
-export async function getProducts(req: Request, res: Response, next: Function) {
+export async function getProducts(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
   try {
-    const products = await Product.fetchAll();
+    const products = await Product.find();
     console.log("products: ", products);
     res.render("shop/product-list", {
       prods: products,
       pageTitle: "Admin Products",
       path: "/products",
+      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
   }
 }
 
-export async function getProduct(req: Request, res: Response, next: Function) {
+export async function getProduct(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
   const prodId: string = req.params.productId;
   // console.log(
   try {
@@ -44,6 +35,7 @@ export async function getProduct(req: Request, res: Response, next: Function) {
       product: product,
       pageTitle: product?.title,
       path: `/products`,
+      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -51,14 +43,19 @@ export async function getProduct(req: Request, res: Response, next: Function) {
   // );
 }
 
-export async function getIndex(req: Request, res: Response, next: Function) {
+export async function getIndex(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
   try {
-    const products = await Product.fetchAll();
+    const products = await Product.find();
     console.log("products: ", products);
     res.render("shop/index", {
       prods: products,
       pageTitle: "Shop",
       path: "/",
+      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -71,12 +68,16 @@ export async function getCart(
   next: Function
 ) {
   try {
-    const cartProducts = await req.user?.getCart();
+    const user = await req.user?.populate("cart.items.productId");
+
+    const cartProducts = user?.cart.items;
+    console.log(cartProducts);
 
     res.render("shop/cart", {
       path: "/cart",
       pageTitle: "Your Cart",
       products: cartProducts,
+      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -92,7 +93,9 @@ export async function postCart(
     const productId = req.body.productId || "";
     const product = await Product.findById(productId);
     if (product) {
-      const user = await req.user?.addToCart(product as Product);
+      const user = await req.user?.addToCart(
+        product as InstanceType<typeof Product>
+      );
       console.log("User: ", user);
       res.redirect("/cart");
     }
@@ -107,7 +110,7 @@ export async function postCartDeleteProduct(
   next: Function
 ) {
   try {
-    await req.user?.deleteItemFromCart(req.body.productId);
+    await req.user?.removeFromCart(req.body.productId);
     res.redirect("/cart");
   } catch (err: any) {
     console.log(err.message);
@@ -120,12 +123,16 @@ export async function getOrders(
   next: Function
 ) {
   try {
-    const orders = await req.user?.getOrders();
+    const orders = await Order.find({
+      "user.userId": req.user?._id,
+    });
+    console.log(orders);
 
     res.render("shop/orders", {
       path: "/orders",
       pageTitle: "Your Orders",
       orders,
+      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -138,17 +145,30 @@ export async function postOrder(
   next: Function
 ) {
   try {
-    await req.user?.addOrder();
+    const user = await req.user?.populate("cart.items.productId");
+
+    const cartProducts = user?.cart.items.map((item: any) => {
+      return {
+        quantity: item.quantity,
+        productData: { ...item.productId.toObject() },
+      };
+    });
+
+    const order = new Order({
+      user: {
+        name: req.user?.name,
+        userId: req.user?._id,
+      },
+      products: cartProducts,
+    });
+    console.log("order: ", order.products);
+    await order.save();
+
+    // Clear the user's cart
+    await req.user?.clearCart();
 
     res.redirect("/orders");
   } catch (err: any) {
     console.log(err.message);
   }
 }
-
-// // export function getCheckout(req: Request, res: Response, next: Function) {
-// //   res.render("shop/checkout", {
-// //     path: "/checkout",
-// //     pageTitle: "Checkout",
-// //   });
-// // }
