@@ -15,7 +15,7 @@ export async function getProducts(
       prods: products,
       pageTitle: "Admin Products",
       path: "/products",
-      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+      // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -35,7 +35,7 @@ export async function getProduct(
       product: product,
       pageTitle: product?.title,
       path: `/products`,
-      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+      // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -55,7 +55,6 @@ export async function getIndex(
       prods: products,
       pageTitle: "Shop",
       path: "/",
-      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -77,7 +76,7 @@ export async function getCart(
       path: "/cart",
       pageTitle: "Your Cart",
       products: cartProducts,
-      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+      // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -132,7 +131,7 @@ export async function getOrders(
       path: "/orders",
       pageTitle: "Your Orders",
       orders,
-      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+      // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -156,7 +155,7 @@ export async function postOrder(
 
     const order = new Order({
       user: {
-        name: req.user?.name,
+        name: req.user?.email,
         userId: req.user?._id,
       },
       products: cartProducts,

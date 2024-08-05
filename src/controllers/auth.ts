@@ -1,26 +1,88 @@
+import bcrypt from "bcryptjs";
 import { Response, Request } from "express";
 import { SessionCustom } from "../util/schemas";
 import User from "../models/user";
+import { error } from "console";
+
+export async function getSignup(req: Request, res: Response, next: Function) {
+  const message = req.flash("error");
+  let errorMessage: string | null;
+  if (message.length) errorMessage = message[0];
+  else errorMessage = null;
+
+  res.render("auth/signup", {
+    path: "/signup",
+    pageTitle: "Signup",
+    errorMessage,
+    // isAuthenticated: false,
+  });
+}
+
+export async function postSignup(req: Request, res: Response, next: Function) {
+  const email = req.body.email;
+  const password = req.body.password;
+  const confirmPassword = req.body.confirmPassword;
+
+  // Encrypting the password
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  try {
+    const existingUser = await User.findOne({ email: email });
+    if (existingUser) {
+      req.flash("error", "Email already exists.");
+      return res.redirect("/signup");
+    }
+
+    const user = new User({
+      email,
+      password: hashedPassword,
+      cart: { items: [] },
+    });
+    await user.save();
+    return res.redirect("/login");
+  } catch (err: any) {
+    console.log(err.message);
+  }
+}
 
 export async function getLogin(req: Request, res: Response, next: Function) {
-  //   const isLoggedIn = req.get("Cookie")?.split(";")[1].trim().split("=")[1];
-  console.log((req.session as SessionCustom).isLoggedIn);
+  const message = req.flash("error");
+  let errorMessage: string | null;
+  if (message.length) errorMessage = message[0];
+  else errorMessage = null;
   res.render("auth/login", {
     path: "/login",
     pageTitle: "Login",
-    isAuthenticated: false,
+    errorMessage,
+    // isAuthenticated: false,
   });
 }
 
 export async function postLogin(req: Request, res: Response, next: Function) {
+  const email = req.body.email;
+  const password = req.body.password;
   try {
-    const user = await User.findById("66ab2bcf73546beb137d6da3");
-    (req.session as SessionCustom).user = user;
-    (req.session as SessionCustom).isLoggedIn = true;
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      req.flash("error", "Invalid email or password.");
+      return res.redirect("/login");
+    } else {
+      try {
+        const doMatch = await bcrypt.compare(password, user.password);
 
-    (req.session as SessionCustom).save((err) => {
-      res.redirect("/");
-    });
+        if (doMatch) {
+          (req.session as SessionCustom).user = user;
+          (req.session as SessionCustom).isLoggedIn = true;
+
+          return (req.session as SessionCustom).save((err) => {
+            res.redirect("/");
+          });
+        }
+        res.redirect("/login");
+      } catch (err) {
+        res.redirect("/login");
+      }
+    }
   } catch (err: any) {
     console.log(err.message);
   }

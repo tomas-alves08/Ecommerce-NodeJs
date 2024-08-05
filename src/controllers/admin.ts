@@ -14,7 +14,7 @@ export async function getProducts(
       prods: products,
       pageTitle: "Admin Products",
       path: "/admin/products",
-      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+      // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);
@@ -26,11 +26,13 @@ export function getAddProduct(
   res: Response,
   next: Function
 ) {
+  // if (!(req.session as SessionCustom).isLoggedIn) return res.redirect("/login");
+
   res.render("admin/edit-product", {
     pageTitle: "Add Product",
     path: "/admin/add-product",
     editing: false,
-    isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+    // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
   });
 }
 
@@ -80,7 +82,7 @@ export async function getEditProduct(
       path: "/admin/edit-product",
       editing: editMode,
       product,
-      isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+      // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
     console.log(err.message);

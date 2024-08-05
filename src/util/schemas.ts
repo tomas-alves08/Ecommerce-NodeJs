@@ -49,7 +49,7 @@ export interface IUser extends Document {
 
 export interface IUser {
   _id?: ObjectId;
-  name: string;
+  password: string;
   email: string;
 }
 

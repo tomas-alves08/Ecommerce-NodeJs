@@ -5,11 +5,11 @@ import { ICartItem, IUser } from "../util/schemas";
 const UserSchema = mongoose.Schema;
 
 const userSchema: Schema<IUser> = new UserSchema({
-  name: {
+  email: {
     type: String,
     required: true,
   },
-  email: {
+  password: {
     type: String,
     required: true,
   },
