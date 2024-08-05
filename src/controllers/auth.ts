@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { Response, Request } from "express";
 import { SessionCustom } from "../util/schemas";
 import User from "../models/user";
-import { error } from "console";
+import sendEmail from "../util/mail";
 
 export async function getSignup(req: Request, res: Response, next: Function) {
   const message = req.flash("error");
@@ -39,6 +39,14 @@ export async function postSignup(req: Request, res: Response, next: Function) {
       cart: { items: [] },
     });
     await user.save();
+
+    //Send email
+    await sendEmail(
+      email,
+      "User created successfully",
+      `User ${email} created successfully`
+    );
+
     return res.redirect("/login");
   } catch (err: any) {
     console.log(err.message);
