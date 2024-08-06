@@ -1,6 +1,6 @@
 import { Response } from "express";
 import Product from "../models/product";
-import { RequestCustom, SessionCustom } from "../util/schemas";
+import { IError, RequestCustom, SessionCustom } from "../util/schemas";
 import Order from "../models/order";
 
 export async function getProducts(
@@ -18,7 +18,9 @@ export async function getProducts(
       // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -31,6 +33,7 @@ export async function getProduct(
   // console.log(
   try {
     const product = await Product.findById(prodId);
+
     res.render("shop/product-detail", {
       product: product,
       pageTitle: product?.title,
@@ -38,7 +41,9 @@ export async function getProduct(
       // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
   // );
 }
@@ -57,7 +62,9 @@ export async function getIndex(
       path: "/",
     });
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -79,7 +86,9 @@ export async function getCart(
       // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -99,7 +108,9 @@ export async function postCart(
       res.redirect("/cart");
     }
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -134,7 +145,9 @@ export async function getOrders(
       // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -168,6 +181,8 @@ export async function postOrder(
 
     res.redirect("/orders");
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }

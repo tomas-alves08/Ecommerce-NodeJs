@@ -42,7 +42,7 @@ router.post(
       .trim(),
     check("confirmPassword").custom((value, { req }) => {
       if (value !== req.body.password)
-        return Promise.reject("Confirm password must match password");
+        throw new Error("Confirm password must match password");
       return true;
     }),
   ],

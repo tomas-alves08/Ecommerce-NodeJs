@@ -1,6 +1,6 @@
 import { Response } from "express";
 import Product from "../models/product";
-import { RequestCustom, SessionCustom } from "../util/schemas";
+import { IError, RequestCustom, SessionCustom } from "../util/schemas";
 import { ObjectId } from "mongoose";
 import { validationResult } from "express-validator";
 
@@ -19,7 +19,9 @@ export async function getProducts(
       // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -52,7 +54,7 @@ export async function postAddProduct(
   if (!errors.isEmpty()) {
     return res.status(422).render("admin/edit-product", {
       pageTitle: "Add Product",
-      path: "/admin/edit-product",
+      path: "/admin/add-product",
       editing: false,
       hasError: true,
       errorMessage: errors.array()[0].msg,
@@ -72,7 +74,9 @@ export async function postAddProduct(
     console.log("created a product");
     res.redirect("/");
   } catch (err: any) {
-    console.log(err);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -104,7 +108,9 @@ export async function getEditProduct(
       // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -146,7 +152,9 @@ export async function postEditProduct(
       res.redirect("/admin/products");
     } else res.redirect("/");
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -161,6 +169,8 @@ export async function postDeleteProduct(
     await Product.deleteOne({ _id: prodId, userId: req.user?._id });
     res.redirect("/admin/products");
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }

@@ -2,10 +2,11 @@ import bcrypt from "bcryptjs";
 // Crypto library provided by NodeJs
 import crypto from "crypto";
 import { Response, Request } from "express";
-import { IUser, SessionCustom } from "../util/schemas";
+import { IError, IUser, SessionCustom } from "../util/schemas";
 import User from "../models/user";
 import sendEmail from "../util/mail";
 import { validationResult } from "express-validator";
+import path from "../util/path";
 
 export async function getSignup(req: Request, res: Response, next: Function) {
   const message = req.flash("error");
@@ -91,8 +92,15 @@ export async function postLogin(req: Request, res: Response, next: Function) {
   try {
     const user = await User.findOne({ email: email });
     if (!user) {
-      req.flash("error", "Invalid email or password.");
-      return res.redirect("/login");
+      return res.status(422).render("auth/login", {
+        path: "/login",
+        pageTitle: "Login",
+        errorMessage: "Invalid email or password",
+        oldInput: {
+          email,
+          password,
+        },
+      });
     } else {
       try {
         const doMatch = await bcrypt.compare(password, user.password);
@@ -111,7 +119,9 @@ export async function postLogin(req: Request, res: Response, next: Function) {
       }
     }
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -122,7 +132,9 @@ export async function postLogout(req: Request, res: Response, next: Function) {
       res.redirect("/login");
     });
   } catch (err: any) {
-    console.log(err.message);
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }
 
@@ -163,7 +175,9 @@ export function postReset(req: Request, res: Response, next: Function) {
         );
       }
     } catch (err: any) {
-      console.log(err.message);
+      const error: IError = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     }
 
     req.flash("error", "No user matches this e-mail address.");
@@ -209,19 +223,25 @@ export async function postNewPassword(
   const userId = req.body.userId;
   const passwordToken = req.body.passwordToken;
 
-  const user = await User.findOne({
-    _id: userId,
-    resetToken: passwordToken,
-    resetTokenExpiration: { $gt: Date.now() },
-  });
+  try {
+    const user = await User.findOne({
+      _id: userId,
+      resetToken: passwordToken,
+      resetTokenExpiration: { $gt: Date.now() },
+    });
 
-  if (user) {
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    if (user) {
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-    user.password = hashedPassword;
-    user.resetToken = undefined;
-    user.resetTokenExpiration = undefined;
-    await user.save();
-    return res.redirect("/login");
+      user.password = hashedPassword;
+      user.resetToken = undefined;
+      user.resetTokenExpiration = undefined;
+      await user.save();
+      return res.redirect("/login");
+    }
+  } catch (err: any) {
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   }
 }

@@ -65,3 +65,7 @@ export interface SessionCustom extends Session {
   isLoggedIn: boolean;
   user: InstanceType<typeof User> | null;
 }
+
+export interface IError extends Error {
+  httpStatusCode?: number;
+}
