@@ -2,6 +2,7 @@ import { Response } from "express";
 import Product from "../models/product";
 import { RequestCustom, SessionCustom } from "../util/schemas";
 import { ObjectId } from "mongoose";
+import { validationResult } from "express-validator";
 
 export async function getProducts(
   req: RequestCustom,
@@ -33,7 +34,9 @@ export function getAddProduct(
     pageTitle: "Add Product",
     path: "/admin/add-product",
     editing: false,
-    // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+    hasError: false,
+    errorMessage: null,
+    oldInput: { title: "", imageUrl: "", description: "", price: "" },
   });
 }
 
@@ -43,6 +46,19 @@ export async function postAddProduct(
   next: Function
 ) {
   const { title, imageUrl, description, price } = req.body;
+
+  // Validation
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).render("admin/edit-product", {
+      pageTitle: "Add Product",
+      path: "/admin/edit-product",
+      editing: false,
+      hasError: true,
+      errorMessage: errors.array()[0].msg,
+      product: { title, imageUrl, description, price },
+    });
+  }
 
   try {
     const product = await new Product({
@@ -79,10 +95,12 @@ export async function getEditProduct(
     }
 
     res.render("admin/edit-product", {
-      pageTitle: "Add Product",
+      pageTitle: "Edit Product",
       path: "/admin/edit-product",
       editing: editMode,
       product,
+      hasError: false,
+      errorMessage: null,
       // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
     });
   } catch (err: any) {
@@ -97,6 +115,19 @@ export async function postEditProduct(
 ) {
   const prodId = req.body.productId;
   const { title, imageUrl, description, price } = req.body;
+
+  // Validation
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).render("admin/edit-product", {
+      pageTitle: "Edit Product",
+      path: "/admin/edit-product",
+      editing: true,
+      hasError: true,
+      errorMessage: errors.array()[0].msg,
+      product: { title, imageUrl, description, price },
+    });
+  }
 
   try {
     const product = await Product.findById(prodId);

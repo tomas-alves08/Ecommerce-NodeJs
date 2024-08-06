@@ -5,6 +5,7 @@ import { Response, Request } from "express";
 import { IUser, SessionCustom } from "../util/schemas";
 import User from "../models/user";
 import sendEmail from "../util/mail";
+import { validationResult } from "express-validator";
 
 export async function getSignup(req: Request, res: Response, next: Function) {
   const message = req.flash("error");
@@ -16,7 +17,7 @@ export async function getSignup(req: Request, res: Response, next: Function) {
     path: "/signup",
     pageTitle: "Signup",
     errorMessage,
-    // isAuthenticated: false,
+    oldInput: { email: "", password: "", confirmPassword: "" },
   });
 }
 
@@ -25,15 +26,19 @@ export async function postSignup(req: Request, res: Response, next: Function) {
   const password = req.body.password;
   const confirmPassword = req.body.confirmPassword;
 
-  // Encrypting the password
-  const hashedPassword = await bcrypt.hash(password, 12);
-
+  //Validation
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).render("auth/signup", {
+      path: "/signup",
+      pageTitle: "Signup",
+      errorMessage: errors.array()[0].msg,
+      oldInput: { email, password, confirmPassword: req.body.confirmPassword },
+    });
+  }
   try {
-    const existingUser = await User.findOne({ email: email });
-    if (existingUser) {
-      req.flash("error", "Email already exists.");
-      return res.redirect("/signup");
-    }
+    // Encrypting the password
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = new User({
       email,
@@ -64,13 +69,25 @@ export async function getLogin(req: Request, res: Response, next: Function) {
     path: "/login",
     pageTitle: "Login",
     errorMessage,
-    // isAuthenticated: false,
+    oldInput: { email: "", password: "", confirmPassword: "" },
   });
 }
 
 export async function postLogin(req: Request, res: Response, next: Function) {
   const email = req.body.email;
   const password = req.body.password;
+
+  //Validation
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).render("auth/login", {
+      path: "/login",
+      pageTitle: "Login",
+      errorMessage: errors.array()[0].msg,
+      oldInput: { email, password, confirmPassword: req.body.confirmPassword },
+    });
+  }
+
   try {
     const user = await User.findOne({ email: email });
     if (!user) {
