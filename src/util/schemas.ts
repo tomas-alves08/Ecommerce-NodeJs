@@ -39,19 +39,23 @@ export interface ICartItem {
 }
 
 export interface IUser extends Document {
+  _id?: ObjectId;
   name: string;
   email: string;
+  password: string;
   cart: ICart;
+  resetToken?: string;
+  resetTokenExpiration?: Date;
   addToCart: (product: InstanceType<typeof Product>) => Promise<void>;
   removeFromCart: (productId: string) => Promise<void>;
   clearCart: () => Promise<void>;
 }
 
-export interface IUser {
-  _id?: ObjectId;
-  password: string;
-  email: string;
-}
+// export interface IUser {
+//   _id?: ObjectId;
+//   password: string;
+//   email: string;
+// }
 
 export interface RequestCustom extends Request {
   user?: InstanceType<typeof User> | null;

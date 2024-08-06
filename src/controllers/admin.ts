@@ -1,6 +1,7 @@
 import { Response } from "express";
 import Product from "../models/product";
 import { RequestCustom, SessionCustom } from "../util/schemas";
+import { ObjectId } from "mongoose";
 
 export async function getProducts(
   req: RequestCustom,
@@ -8,7 +9,7 @@ export async function getProducts(
   next: Function
 ) {
   try {
-    const products = await Product.find();
+    const products = await Product.find({ userId: req.user?._id });
     console.log("products: ", products);
     res.render("admin/products", {
       prods: products,
@@ -99,6 +100,10 @@ export async function postEditProduct(
 
   try {
     const product = await Product.findById(prodId);
+
+    if ((product?.userId as ObjectId).toString() !== req.user?._id.toString())
+      return res.redirect("/");
+
     if (product) {
       product.title = title;
       product.description = description;
@@ -121,10 +126,8 @@ export async function postDeleteProduct(
 ) {
   const prodId = req.params.productId;
 
-  console.log(prodId);
-
   try {
-    await Product.findByIdAndDelete(prodId);
+    await Product.deleteOne({ _id: prodId, userId: req.user?._id });
     res.redirect("/admin/products");
   } catch (err: any) {
     console.log(err.message);

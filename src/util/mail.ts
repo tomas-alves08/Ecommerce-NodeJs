@@ -10,12 +10,12 @@ let transporter = nodemailer.createTransport({
   },
 });
 
-async function sendEmail(to: string, subject: string, text: string) {
+async function sendEmail(to: string, subject: string, html: string) {
   let mailOptions = {
     from: "tomas.alves08@gmail.com",
     to,
     subject,
-    text,
+    html,
   };
 
   return await transporter.sendMail(
