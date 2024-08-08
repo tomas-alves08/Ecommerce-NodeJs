@@ -70,7 +70,7 @@ export async function getLogin(req: Request, res: Response, next: Function) {
     path: "/login",
     pageTitle: "Login",
     errorMessage,
-    oldInput: { email: "", password: "", confirmPassword: "" },
+    oldInput: { email: "", password: "" },
   });
 }
 
@@ -85,12 +85,13 @@ export async function postLogin(req: Request, res: Response, next: Function) {
       path: "/login",
       pageTitle: "Login",
       errorMessage: errors.array()[0].msg,
-      oldInput: { email, password, confirmPassword: req.body.confirmPassword },
+      oldInput: { email, password },
     });
   }
 
   try {
     const user = await User.findOne({ email: email });
+    console.log("Login user: ", user);
     if (!user) {
       return res.status(422).render("auth/login", {
         path: "/login",

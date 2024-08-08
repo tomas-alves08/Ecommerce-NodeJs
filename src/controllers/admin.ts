@@ -1,8 +1,14 @@
 import { Response } from "express";
 import Product from "../models/product";
-import { IError, RequestCustom, SessionCustom } from "../util/schemas";
+import {
+  IError,
+  IProduct,
+  RequestCustom,
+  SessionCustom,
+} from "../util/schemas";
 import { ObjectId } from "mongoose";
 import { validationResult } from "express-validator";
+import { deleteFile } from "../util/file";
 
 export async function getProducts(
   req: RequestCustom,
@@ -47,7 +53,21 @@ export async function postAddProduct(
   res: Response,
   next: Function
 ) {
-  const { title, imageUrl, description, price } = req.body;
+  const { title, description, price } = req.body;
+  console.log("Post Product Body: ", req.body);
+  const image = req.file;
+  console.log("IMAGE: ", image);
+
+  if (!image) {
+    return res.status(422).render("admin/edit-product", {
+      pageTitle: "Add Product",
+      path: "/admin/add-product",
+      editing: false,
+      hasError: true,
+      errorMessage: "Attached file is not an image",
+      product: { title, description, price },
+    });
+  }
 
   // Validation
   const errors = validationResult(req);
@@ -58,9 +78,11 @@ export async function postAddProduct(
       editing: false,
       hasError: true,
       errorMessage: errors.array()[0].msg,
-      product: { title, imageUrl, description, price },
+      product: { title, image, description, price },
     });
   }
+
+  const imageUrl = "images/" + image.filename;
 
   try {
     const product = await new Product({
@@ -120,7 +142,8 @@ export async function postEditProduct(
   next: Function
 ) {
   const prodId = req.body.productId;
-  const { title, imageUrl, description, price } = req.body;
+  const { title, description, price } = req.body;
+  const image = req.file;
 
   // Validation
   const errors = validationResult(req);
@@ -131,7 +154,7 @@ export async function postEditProduct(
       editing: true,
       hasError: true,
       errorMessage: errors.array()[0].msg,
-      product: { title, imageUrl, description, price },
+      product: { title, description, price },
     });
   }
 
@@ -144,7 +167,10 @@ export async function postEditProduct(
     if (product) {
       product.title = title;
       product.description = description;
-      product.imageUrl = imageUrl;
+      if (image) {
+        deleteFile(product.imageUrl as IProduct["imageUrl"]);
+        product.imageUrl = image.path;
+      }
       product.price = price;
 
       await product.save();
@@ -166,7 +192,12 @@ export async function postDeleteProduct(
   const prodId = req.params.productId;
 
   try {
+    const product = await Product.findById(prodId);
+    if (!product) return next(new Error("No product found."));
+    else deleteFile(product.imageUrl as IProduct["imageUrl"]);
+
     await Product.deleteOne({ _id: prodId, userId: req.user?._id });
+
     res.redirect("/admin/products");
   } catch (err: any) {
     const error: IError = new Error(err);

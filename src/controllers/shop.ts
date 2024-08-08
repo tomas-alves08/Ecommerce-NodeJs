@@ -1,7 +1,16 @@
 import { Response } from "express";
 import Product from "../models/product";
-import { IError, RequestCustom, SessionCustom } from "../util/schemas";
+import {
+  IError,
+  IOrder,
+  IUser,
+  RequestCustom,
+  SessionCustom,
+} from "../util/schemas";
 import Order from "../models/order";
+import path from "path";
+import fs from "fs";
+import pdfkit from "pdfkit";
 
 export async function getProducts(
   req: RequestCustom,
@@ -168,18 +177,98 @@ export async function postOrder(
 
     const order = new Order({
       user: {
-        name: req.user?.email,
+        email: req.user?.email,
         userId: req.user?._id,
       },
       products: cartProducts,
     });
-    console.log("order: ", order.products);
+
     await order.save();
 
     // Clear the user's cart
     await req.user?.clearCart();
 
     res.redirect("/orders");
+  } catch (err: any) {
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
+  }
+}
+
+export async function GetInvoice(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
+  const orderId = req.params.orderId;
+
+  try {
+    const order = (await Order.findById(orderId)) as IOrder;
+    if (!order) return next("No order found.");
+    const user = req.user;
+
+    if (order?.user?.userId.toString() !== user?._id.toString())
+      return next(new Error("You are not authorized to see this file."));
+
+    const invoiceName = "invoice-" + orderId + ".pdf";
+    const invoicePath = path.join("src", "data", "invoices", invoiceName);
+
+    const pdfDocument = new pdfkit();
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "inline; filename='" + invoiceName + "'"
+    );
+
+    pdfDocument.pipe(fs.createWriteStream(invoicePath));
+    pdfDocument.pipe(res);
+
+    pdfDocument.fontSize(26).text("Invoice", {
+      underline: true,
+    });
+    pdfDocument.text("------------------------------");
+
+    let totalPrice = 0;
+    order.products.forEach((prod) => {
+      totalPrice += prod.productData.price * prod.quantity;
+      pdfDocument.fontSize(20).text(prod.productData.title);
+      pdfDocument
+        .fontSize(14)
+        .text(
+          "Price: $" + prod.productData.price + " | Quantity: " + prod.quantity
+        );
+      pdfDocument
+        .fontSize(14)
+        .text("Description: $" + prod.productData.description);
+
+      pdfDocument.text("--------");
+    });
+
+    pdfDocument.fontSize(18).text("Total: " + totalPrice);
+
+    pdfDocument.end();
+    // fs.readFile(invoicePath, (err, data) => {
+    //   console.log(err);
+    //   if (err) return next(err);
+
+    //   res.setHeader("Content-Type", "application/pdf");
+    //   res.setHeader(
+    //     "Content-Disposition",
+    //     "inline; filename='" + invoiceName + "'"
+    //   );
+    //   res.send(data);
+    // });
+
+    // // HOW TO PIPE LARGE PDF FILES
+    // const file = fs.createReadStream(invoicePath);
+    // res.setHeader("Content-Type", "application/pdf");
+    //   res.setHeader(
+    //     "Content-Disposition",
+    //     "inline; filename='" + invoiceName + "'"
+    //   );
+    // file.pipe(res);
   } catch (err: any) {
     const error: IError = new Error(err);
     error.httpStatusCode = 500;

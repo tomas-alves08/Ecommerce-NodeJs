@@ -28,13 +28,9 @@ router.post(
         "Title must contain only alpha numeric values and at least 3 characters long."
       )
       .trim(),
-    check("imageUrl")
-      .isURL()
-      .withMessage("Please enter a valid URL in the image field.")
-      .trim(),
     check("price").isNumeric().withMessage("Price is required."),
     check("description")
-      .isAlphanumeric()
+      .isString()
       .isLength({ min: 5, max: 400 })
       .withMessage(
         "Description must contain only alpha numeric values and at least 5 characters long."
@@ -57,13 +53,13 @@ router.post(
         "Title must contain only alpha numeric values and at least 3 characters long."
       )
       .trim(),
-    check("imageUrl")
-      .isURL()
-      .withMessage("Please enter a valid URL in the image field.")
-      .trim(),
+    // check("imageUrl")
+    //   .isURL()
+    //   .withMessage("Please enter a valid URL in the image field.")
+    //   .trim(),
     check("price").isNumeric().withMessage("Price is required."),
     check("description")
-      .isAlphanumeric()
+      .isString()
       .isLength({ min: 5, max: 400 })
       .withMessage(
         "Description must contain only alpha numeric values and at least 5 characters long."

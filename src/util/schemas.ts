@@ -24,7 +24,7 @@ export interface IOrder {
     quantity: number;
   }[];
   user: {
-    name: string;
+    email: string;
     userId: ObjectId;
   };
 }
@@ -59,6 +59,7 @@ export interface IUser extends Document {
 
 export interface RequestCustom extends Request {
   user?: InstanceType<typeof User> | null;
+  file?: Express.Multer.File;
 }
 
 export interface SessionCustom extends Session {

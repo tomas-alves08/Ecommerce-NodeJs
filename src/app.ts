@@ -1,7 +1,9 @@
 import express from "express";
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, Express } from "express";
 import path from "path";
+import fs from "fs";
 import bodyParser from "body-parser";
+import multer, { Multer } from "multer";
 import mongoose from "mongoose";
 import session from "express-session";
 import connectMongodbSession from "connect-mongodb-session";
@@ -33,9 +35,41 @@ import authRoute from "./routes/auth";
 import { get500DatabaseFailed, getNotFound } from "./controllers/error";
 import { RequestCustom, SessionCustom } from "./util/schemas";
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, "public")));
+// Setting up how the file is stored
+const imagesDir = path.join(__dirname, "src/images");
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
 
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "src/images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, new Date().toISOString() + "-" + file.originalname);
+  },
+});
+
+const fileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  )
+    cb(null, true);
+  else cb(null, false);
+};
+
+app.use(bodyParser.urlencoded({ extended: false }));
+// Middleware to allow my form to get file that are uploaded
+app.use(multer({ storage: fileStorage, fileFilter }).single("image"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/images", express.static(path.join(__dirname, "images")));
+console.log(__dirname);
 // Setting up the Session
 app.use(
   session({
@@ -50,7 +84,7 @@ app.use(
 app.use(csrfProtection);
 app.use(flash());
 
-app.use((req: RequestCustom, res: Response, next: NextFunction) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.locals.isAuthenticated = (req.session as SessionCustom).isLoggedIn;
   res.locals.csrfToken = req.csrfToken();
   next();
@@ -80,12 +114,15 @@ app.get("/500", get500DatabaseFailed);
 app.use("/", getNotFound);
 
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  console.log("ERROR MIDDLEWARE!");
+  console.log(error);
+  const errorMessage = error.toString().split(":")[1];
+  console.log("REQ SESSION: ", req.session);
   // res.redirect("/500");
   res.status(500).render("500", {
     pageTitle: "Error!",
     path: "/500",
     isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+    errorMessage,
   });
 });
 
