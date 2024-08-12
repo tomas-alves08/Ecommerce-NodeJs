@@ -184,7 +184,7 @@ export async function postEditProduct(
   }
 }
 
-export async function postDeleteProduct(
+export async function deleteProduct(
   req: RequestCustom,
   res: Response,
   next: Function
@@ -198,10 +198,12 @@ export async function postDeleteProduct(
 
     await Product.deleteOne({ _id: prodId, userId: req.user?._id });
 
-    res.redirect("/admin/products");
+    res.status(200).json({
+      message: "Success!",
+    });
   } catch (err: any) {
-    const error: IError = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error);
+    return res.status(500).json({
+      message: "Deleting product failed!",
+    });
   }
 }

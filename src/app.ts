@@ -67,9 +67,9 @@ const fileFilter = (
 app.use(bodyParser.urlencoded({ extended: false }));
 // Middleware to allow my form to get file that are uploaded
 app.use(multer({ storage: fileStorage, fileFilter }).single("image"));
-app.use(express.static(path.join(__dirname, "public")));
 app.use("/images", express.static(path.join(__dirname, "images")));
-console.log(__dirname);
+app.use(express.static(path.join(__dirname, "public")));
+
 // Setting up the Session
 app.use(
   session({

@@ -1,147 +1,50 @@
 "use strict";
-// import {
-//   Table,
-//   Column,
-//   Model,
-//   DataType,
-//   Default,
-//   PrimaryKey,
-//   ForeignKey,
-//   BelongsTo,
-//   BelongsToMany,
-// } from "sequelize-typescript";
-// import { v4 as uuidv4 } from "uuid";
-// import { User } from "./user";
-// import { Cart } from "./cart";
-// import { CartItem } from "./cart-item";
-// import { Order } from "./order";
-// import { OrderItem } from "./order-item";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Product = void 0;
-// @Table({
-//   tableName: "Products",
-// })
-// export class Product extends Model<Product> {
-//   @PrimaryKey
-//   @Default(uuidv4)
-//   @Column({
-//     type: DataType.UUID,
-//     defaultValue: DataType.UUIDV4,
-//     allowNull: false,
-//   })
-//   id!: string;
-//   @Column({
-//     type: DataType.STRING,
-//     allowNull: false,
-//   })
-//   title!: string;
-//   @Column({
-//     type: DataType.STRING,
-//     allowNull: false,
-//   })
-//   imageUrl!: string;
-//   @Column({
-//     type: DataType.TEXT,
-//     allowNull: false,
-//   })
-//   description!: string;
-//   @Column({
-//     type: DataType.FLOAT,
-//     allowNull: false,
-//   })
-//   price!: number;
-//   @ForeignKey(() => User)
-//   @Column({
-//     type: DataType.UUID,
-//     allowNull: false,
-//   })
-//   UserId!: string;
-//   @BelongsTo(() => User)
-//   user!: User;
-//   @BelongsToMany(() => Cart, () => CartItem)
-//   carts!: Cart[];
-//   @BelongsToMany(() => Order, () => OrderItem)
-//   orders!: Order[];
-// }
-const mongodb_1 = require("mongodb");
-const database_1 = require("../util/database");
-class Product {
-    constructor(title, price, description, imageUrl, id) {
-        this._id = id ? new mongodb_1.ObjectId(id) : undefined;
-        this.title = title;
-        this.price = price;
-        this.description = description;
-        this.imageUrl = imageUrl;
-    }
-    save() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const db = (0, database_1.getDb)();
-                return yield db.collection("products").insertOne(this);
-            }
-            catch (err) {
-                console.log(err.message);
-            }
-        });
-    }
-    static fetchAll() {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const db = (0, database_1.getDb)();
-                return yield db.collection("products").find().toArray();
-            }
-            catch (err) {
-                console.log(err.message);
-            }
-        });
-    }
-    static findById(prodId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            // Transforming prodId to type ObjectId
-            const id = new mongodb_1.ObjectId(prodId);
-            try {
-                const db = (0, database_1.getDb)();
-                return yield db.collection("products").findOne({ _id: id });
-            }
-            catch (err) {
-                console.log(err.message);
-            }
-        });
-    }
-    static update(prodId, updatedProd) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const db = (0, database_1.getDb)();
-            const id = new mongodb_1.ObjectId(prodId);
-            try {
-                return yield db
-                    .collection("products")
-                    .updateOne({ _id: id }, { $set: updatedProd });
-            }
-            catch (err) {
-                console.log(err.message);
-            }
-        });
-    }
-    static deleteById(prodId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const db = (0, database_1.getDb)();
-                const id = new mongodb_1.ObjectId(prodId);
-                return yield db.collection("products").deleteOne({ _id: id });
-            }
-            catch (err) {
-                console.log(err.message);
-            }
-        });
-    }
-}
-exports.Product = Product;
+const mongoose_1 = __importStar(require("mongoose"));
+const ProductSchema = mongoose_1.default.Schema;
+const productSchema = new ProductSchema({
+    title: {
+        type: String,
+        required: true,
+    },
+    imageUrl: {
+        type: String,
+        required: true,
+    },
+    price: {
+        type: Number,
+        required: true,
+    },
+    description: {
+        type: String,
+        required: true,
+    },
+    userId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
+});
+module.exports = mongoose_1.default.model("Product", productSchema);

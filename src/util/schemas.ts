@@ -34,8 +34,9 @@ export interface ICart {
 }
 
 export interface ICartItem {
-  productId: ObjectId;
+  productId: IProduct & { _id: ObjectId };
   quantity: number;
+  _id?: ObjectId;
 }
 
 export interface IUser extends Document {

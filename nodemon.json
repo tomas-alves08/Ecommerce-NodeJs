@@ -2,5 +2,5 @@
   "watch": ["src"],
   "ext": "ts",
   "ignore": ["src/**/*.test.ts", "node_modules"],
-  "exec": "ts-node ./src/app.ts"
+  "exec": "npm run convert-client-ts && ts-node ./src/app.ts"
 }

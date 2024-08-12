@@ -11,20 +11,40 @@ import Order from "../models/order";
 import path from "path";
 import fs from "fs";
 import pdfkit from "pdfkit";
+import Stripe from "stripe";
+import dotenv from "dotenv";
+dotenv.config();
+
+const stripe = new Stripe(process.env.STRIPE_API_KEY as string, {
+  apiVersion: "2024-06-20",
+});
+// console.log(process.env.STRIPE_API_KEY);
+
+const ITEMS_PER_PAGE = 1;
 
 export async function getProducts(
   req: RequestCustom,
   res: Response,
   next: Function
 ) {
+  const page: number = Number(req.query.page) || 1;
+
   try {
-    const products = await Product.find();
+    const totalItems = await Product.find().countDocuments();
+    const products = await Product.find()
+      .skip((page - 1) * ITEMS_PER_PAGE)
+      .limit(ITEMS_PER_PAGE);
     console.log("products: ", products);
     res.render("shop/product-list", {
       prods: products,
-      pageTitle: "Admin Products",
+      pageTitle: "Products",
       path: "/products",
-      // isAuthenticated: (req.session as SessionCustom).isLoggedIn,
+      currentPage: page,
+      hasNextPage: totalItems > page * ITEMS_PER_PAGE,
+      hasPreviousPage: page > 1,
+      nextPage: page + 1,
+      previousPage: page - 1,
+      lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
     });
   } catch (err: any) {
     const error: IError = new Error(err);
@@ -63,12 +83,24 @@ export async function getIndex(
   next: Function
 ) {
   try {
-    const products = await Product.find();
+    const page: number = Number(req.query.page) || 1;
+
+    const totalItems = await Product.find().countDocuments();
+    const products = await Product.find()
+      .skip((page - 1) * ITEMS_PER_PAGE)
+      .limit(ITEMS_PER_PAGE);
+
     console.log("products: ", products);
     res.render("shop/index", {
       prods: products,
       pageTitle: "Shop",
       path: "/",
+      currentPage: page,
+      hasNextPage: totalItems > page * ITEMS_PER_PAGE,
+      hasPreviousPage: page > 1,
+      nextPage: page + 1,
+      previousPage: page - 1,
+      lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
     });
   } catch (err: any) {
     const error: IError = new Error(err);
@@ -196,7 +228,7 @@ export async function postOrder(
   }
 }
 
-export async function GetInvoice(
+export async function getInvoice(
   req: RequestCustom,
   res: Response,
   next: Function
@@ -269,6 +301,98 @@ export async function GetInvoice(
     //     "inline; filename='" + invoiceName + "'"
     //   );
     // file.pipe(res);
+  } catch (err: any) {
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
+  }
+}
+
+export async function getCheckout(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
+  try {
+    const user = await req.user?.populate("cart.items.productId");
+
+    const cartProducts = user?.cart.items;
+    console.log(cartProducts);
+
+    if (!cartProducts) return;
+
+    let totalCost = 0;
+    cartProducts?.forEach((prod) => {
+      totalCost += prod.quantity * prod.productId.price;
+    });
+
+    // Create a Stripe Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: cartProducts.map((prod) => {
+        return {
+          price_data: {
+            currency: "nzd",
+            product_data: {
+              name: prod.productId.title,
+              description: prod.productId.description,
+            },
+            // times 100 to make it up as Stripe takes 2 first digits as cents
+            unit_amount: prod.productId.price * 100,
+          },
+          quantity: prod.quantity,
+        };
+      }),
+      mode: "payment",
+      success_url: req.protocol + "://" + req.get("host") + "/checkout/success",
+      cancel_url: req.protocol + "://" + req.get("host") + "/checkout/cancel",
+    });
+
+    console.log("Stripe session: ", session);
+
+    res.render("shop/checkout", {
+      path: "/checkout",
+      pageTitle: "Checkout",
+      products: cartProducts,
+      totalCost: totalCost,
+      sessionId: session.id,
+    });
+  } catch (err: any) {
+    const error: IError = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
+  }
+}
+
+export async function getCheckoutSuccess(
+  req: RequestCustom,
+  res: Response,
+  next: Function
+) {
+  try {
+    const user = await req.user?.populate("cart.items.productId");
+
+    const cartProducts = user?.cart.items.map((item: any) => {
+      return {
+        quantity: item.quantity,
+        productData: { ...item.productId.toObject() },
+      };
+    });
+
+    const order = new Order({
+      user: {
+        email: req.user?.email,
+        userId: req.user?._id,
+      },
+      products: cartProducts,
+    });
+
+    await order.save();
+
+    // Clear the user's cart
+    await req.user?.clearCart();
+
+    res.redirect("/orders");
   } catch (err: any) {
     const error: IError = new Error(err);
     error.httpStatusCode = 500;
